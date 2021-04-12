@@ -67,11 +67,20 @@ def computeDK(theta1, theta2, theta3):
     theta3 = THETA3_MOTOR_SIGN - theta3Correction
     #todo
 
+def computeDKDetailed(): 
+    #todo
+
 '''
 x,y + angle theta --> point qui est rotation de (x,y) avec theta
 '''
-def rotaton_2D:
+def rotaton_2D(x, y, z, theta):
+    return [cos(theta)*x - sin(theta)*y, sin(theta)*x + cos(theta)*y]
+
+def computeIK(x, y, z, verbose=True, use_rads=True):
     #todo
 
+def computeIKOriented(): 
+    #todo
+    
 if __name__ == "__main__":
     printf("bonjour.\n")
