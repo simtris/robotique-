@@ -2,7 +2,7 @@ import numpy as np
 import math as m
 import constants
 import math
-
+import interpolation
 
 
 def Rx(theta):
@@ -19,6 +19,25 @@ def Rz(theta):
   return np.array([[ m.cos(theta), -m.sin(theta), 0 ],
                    [ m.sin(theta), m.cos(theta) , 0 ],
                    [ 0           , 0            , 1 ]]) 
+
+
+
+
+def rot_Y(pos, angle):
+    return [np.cos(angle)*pos[0]-np.sin(angle)*pos[2],pos[1],np.sin(angle)*pos[0]+np.cos(angle)*pos[2]]
+
+def rot_Z(pos, angle):
+    return [np.cos(angle)*pos[0]-np.sin(angle)*pos[1],np.sin(angle)*pos[0]+np.cos(angle)*pos[1],pos[2]]
+
+def rot_X(pos, angle):
+    return [pos[0],np.cos(angle)*pos[1]-np.sin(angle)*pos[2],np.sin(angle)*pos[1]+np.cos(angle)*pos[2]]
+
+def rad_to_deg(angle):
+    return (angle * 180 )/ np.pi
+
+def deg_to_rad(angle):
+    return (angle * np.pi) / 180
+
 
 
 
@@ -188,28 +207,76 @@ def computeIK(
   
   
 
-def computeIKOriented(x, y, z, leg_id, params, verbose=True):
+def computeIKOriented(x, y, z, leg_id, params, teta, verbose=True):
 
   target = np.array([x, y, z])  # le points cible dans repère du bout de la patte
 
   #le points cible dans le repère d'avant
-  toret = np.dot(Rz(constants.LEG_ANGLES[leg_id-1]), target) + np.array(params.initLeg[leg_id-1] + [params.z])
+  toret = np.dot(Rz(constants.LEG_ANGLES[leg_id-1] + teta), target) + np.array(params.initLeg[leg_id-1] + [params.z])
    
   
   return computeIK(toret[0], toret[1] , toret[2])
-  
+
+
+def walk(t, freq, params, targets, teta):
+  d = 0.08
+  h = 0.05
+  if freq != 0:
+    spline3D = interpolation.LinearSpline3D()
+    period = 1 / freq
+    
+    spline3D.add_entry(0, d, 0,  0)
+    spline3D.add_entry(period / 3, -d, 0, 0)
+    spline3D.add_entry((2 * period) / 3, 0, 0, h)
+    spline3D.add_entry(period, d, 0,  0)
+      
+    first_step = spline3D.interpolate(t % period)
+    next_step = spline3D.interpolate((t + period/2) % period)
+
+    return first_step, next_step
+
+  return np.zeros(3), np.zeros(3)
+
+
+def rotate_fix(t, freq, params, targets, teta):
+  d = 0.08
+  h = 0.05
+  if freq != 0:
+    spline3D = interpolation.LinearSpline3D()
+    period = 1 / freq
+    
+    spline3D.add_entry(0, d, 0,  0)
+
+    inter1 = rotaton_2D(d, 0, 0, teta/2)
+    
+    inter2 = rotaton_2D(d, 0, 0, teta)
+    
+    spline3D.add_entry(period / 3, inter2[0], inter2[1], inter2[2])
+    
+    #spline3D.add_entry((2 * period) / 3, 0, 0, 0.07)
+
+    spline3D.add_entry((2 * period) / 3, inter1[0], inter1[1], h)
+    
+    spline3D.add_entry(period, d, 0,  0)
+      
+    first_step = spline3D.interpolate(t % period)
+    next_step = spline3D.interpolate((t + period/2) % period)
+
+    return first_step, next_step
+
+  return np.zeros(3), np.zeros(3)
+
 
   
   
-
-
+   
   
-
+  
    
 if __name__ == "__main__":
     print("bonjour.\n")
 
-    print(computeIKOriented(0, -90, -90, 1, ))
+    
 
 
     
