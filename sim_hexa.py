@@ -124,6 +124,7 @@ elif args.mode == "inverse":
     controls["target_x"] = p.addUserDebugParameter("target_x", -0.4, 0.4, alphas[0])
     controls["target_y"] = p.addUserDebugParameter("target_y", -0.4, 0.4, alphas[1])
     controls["target_z"] = p.addUserDebugParameter("target_z", -0.4, 0.4, alphas[2])
+    
 
 elif args.mode == "walk":
     controls["teta"] = p.addUserDebugParameter("Direction", -math.pi, math.pi, 0)
@@ -132,7 +133,13 @@ elif args.mode == "walk":
 elif args.mode == "rotate_fix":
     controls["teta"] = p.addUserDebugParameter("Direction", -math.pi, math.pi, 0)
     controls["freq"] = p.addUserDebugParameter("Vitesse", 0, 5, 1)
-    
+
+elif args.mode == "center-follow":
+    alphas = kinematics.computeDK(0, 0, 0, use_rads=True)
+    controls["target_x"] = p.addUserDebugParameter("target_x", -0.2, 0.2, alphas[0])
+    controls["target_y"] = p.addUserDebugParameter("target_y", -0.15, 0.15, alphas[1])
+    controls["target_z"] = p.addUserDebugParameter("target_z", -0.15, 0.09, alphas[2])
+           
 
 
 while True:
@@ -219,6 +226,7 @@ while True:
             set_leg_angles(alphas, leg_id, targets, params)
         state = sim.setJoints(targets)
 
+    #elif args.mode == "moveCenter":
 
     elif args.mode == "walk":
         None
@@ -262,6 +270,25 @@ while True:
             set_leg_angles(alphas, leg_id, targets, params)
         
         
+        
+        state = sim.setJoints(targets)
+
+
+    elif args.mode == "center-follow":
+        x = p.readUserDebugParameter(controls["target_x"])
+        y = p.readUserDebugParameter(controls["target_y"])
+        z = p.readUserDebugParameter(controls["target_z"]) 
+        for leg_id in range(1, 7):
+            alphas = kinematics.computeIKOriented(
+                x,
+                y,
+                z,
+                leg_id,
+                params,
+                0,
+                verbose=False,
+            )
+            set_leg_angles(alphas, leg_id, targets, params)
         
         state = sim.setJoints(targets)
         

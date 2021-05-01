@@ -21,26 +21,6 @@ def Rz(theta):
                    [ 0           , 0            , 1 ]]) 
 
 
-
-
-def rot_Y(pos, angle):
-    return [np.cos(angle)*pos[0]-np.sin(angle)*pos[2],pos[1],np.sin(angle)*pos[0]+np.cos(angle)*pos[2]]
-
-def rot_Z(pos, angle):
-    return [np.cos(angle)*pos[0]-np.sin(angle)*pos[1],np.sin(angle)*pos[0]+np.cos(angle)*pos[1],pos[2]]
-
-def rot_X(pos, angle):
-    return [pos[0],np.cos(angle)*pos[1]-np.sin(angle)*pos[2],np.sin(angle)*pos[1]+np.cos(angle)*pos[2]]
-
-def rad_to_deg(angle):
-    return (angle * 180 )/ np.pi
-
-def deg_to_rad(angle):
-    return (angle * np.pi) / 180
-
-
-
-
 # Given the sizes (a, b, c) of the 3 sides of a triangle, returns the angle between a and b using the alKashi theorem.
 def alKashi(a, b, c, sign=-1):
     if a * b == 0:
@@ -190,19 +170,19 @@ def computeIK(
           use_rads=use_rads,
         ),
       ]
-    if verbose:
-      print(
-        "Asked IK for x={}, y={}, z={}\n, --> theta1={}, theta2={}, theta3={}".format(
-          x,
-          y,
-          z,
-          result[0],
-          result[1],
-          result[2],
-        )
-      )
+    # if verbose:
+    #   print(
+    #     "Asked IK for x={}, y={}, z={}\n, --> theta1={}, theta2={}, theta3={}".format(
+    #       x,
+    #       y,
+    #       z,
+    #       result[0],
+    #       result[1],
+    #       result[2],
+    #     )
+    #   )
 
-    print("result :", result)
+    #print("result :", result)
     return result
   
   
@@ -221,6 +201,7 @@ def computeIKOriented(x, y, z, leg_id, params, teta, verbose=True):
 def walk(t, freq, params, targets, teta):
   d = 0.08
   h = 0.05
+  #print(type(d))
   if freq != 0:
     spline3D = interpolation.LinearSpline3D()
     period = 1 / freq
@@ -244,20 +225,22 @@ def rotate_fix(t, freq, params, targets, teta):
   if freq != 0:
     spline3D = interpolation.LinearSpline3D()
     period = 1 / freq
-    
-    spline3D.add_entry(0, d, 0,  0)
+        
+    inter1 = rotaton_2D(0, 0, 0, teta)
 
-    inter1 = rotaton_2D(d, 0, 0, teta/2)
-    
-    inter2 = rotaton_2D(d, 0, 0, teta)
-    
-    spline3D.add_entry(period / 3, inter2[0], inter2[1], inter2[2])
-    
-    #spline3D.add_entry((2 * period) / 3, 0, 0, 0.07)
+    inter2 = rotaton_2D(0, 0, 0, -teta)
 
-    spline3D.add_entry((2 * period) / 3, inter1[0], inter1[1], h)
     
-    spline3D.add_entry(period, d, 0,  0)
+    
+    spline3D.add_entry(0., inter1[0].item(), inter1[1].item(), inter1[2])
+
+    spline3D.add_entry((2 * period) / 3, inter2[0].item(), inter2[1].item(), inter2[2])
+    
+    spline3D.add_entry(period / 3, inter2[0].item(), inter2[1].item(), inter2[2])
+    
+    spline3D.add_entry((2 * period) / 3, 0, 0, h)
+
+    spline3D.add_entry(period, inter1[0].item(), inter1[1].item(), inter1[2])
       
     first_step = spline3D.interpolate(t % period)
     next_step = spline3D.interpolate((t + period/2) % period)
