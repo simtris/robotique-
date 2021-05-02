@@ -127,8 +127,8 @@ elif args.mode == "inverse":
     
 
 elif args.mode == "walk":
-    controls["teta"] = p.addUserDebugParameter("Direction", -math.pi, math.pi, 0)
-    controls["freq"] = p.addUserDebugParameter("Vitesse", 0, 5, 1)
+    controls["teta"] = p.addUserDebugParameter("orientation", -math.pi, math.pi, 0)
+    controls["freq"] = p.addUserDebugParameter("speed", 0, 5, 1)
 
 elif args.mode == "center-follow":
     alphas = kinematics.computeDK(0, 0, 0, use_rads=True)
@@ -157,10 +157,15 @@ elif args.mode == "control-legs":
     controls["target_y6"] = p.addUserDebugParameter("target_y6", -0.4, 0.4, alphas[1])
     controls["target_z6"] = p.addUserDebugParameter("target_z6", -0.4, 0.4, alphas[2])
     
-elif args.mode == "center_rotation":
+elif args.mode == "static_rotation":
     controls["theta"] = p.addUserDebugParameter("theta", math.pi/200, math.pi/5, 50)
     controls["rayon"] = p.addUserDebugParameter("rayon", 0.25, 0.326, 0.05)
     
+    
+elif args.mode == "dynamic-rotation":
+    controls["freq"] = p.addUserDebugParameter("speed", 0, 5, 1)
+    controls["hauteur"] = p.addUserDebugParameter("hauteur", 0.01, 0.1, 0.02)
+    controls["distance"] = p.addUserDebugParameter("distance", 0.15, 0.2, 0.02)
     
     
 
@@ -273,6 +278,30 @@ while True:
         state = sim.setJoints(targets)
 
 
+    elif args.mode == "dynamic-rotation":
+        None
+        t = time.time()
+        freq = p.readUserDebugParameter(controls["freq"])
+        hauteur = p.readUserDebugParameter(controls["hauteur"])
+        distance = p.readUserDebugParameter(controls["distance"])
+        
+
+        first_step, next_step = kinematics.dynamic_rotation(t, freq, distance, hauteur, params, targets)
+
+        for leg_id in [1,3,5]:
+            alphas = kinematics.computeIK(first_step[0], first_step[1], first_step[2])
+
+            print("alphas : ", alphas)
+            
+            set_leg_angles(alphas, leg_id, targets, params)
+
+        for leg_id in [2,4,6]:
+            alphas = kinematics.computeIK(next_step[0], next_step[1], next_step[2])
+            set_leg_angles(alphas, leg_id, targets, params)
+        
+
+        state = sim.setJoints(targets)    
+
     elif args.mode == "center-follow":
         x = p.readUserDebugParameter(controls["target_x"])
         y = p.readUserDebugParameter(controls["target_y"])
@@ -369,7 +398,7 @@ while True:
         sim.setRobotPose([0, 0, 0.5], [0, 0, 0, 1])
 
 
-    elif args.mode == "center_rotation" :
+    elif args.mode == "static_rotation" :
         h = -0.1
         theta = p.readUserDebugParameter(controls["theta"])
 

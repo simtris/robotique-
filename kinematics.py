@@ -220,6 +220,38 @@ def walk(t, freq, params, targets, teta):
 
 
 
+def dynamic_rotation(t, freq, distance, hauteur, params, targets):
+  z = params.z
+
+  #d = 0.2
+  #h = 0.1
+
+  d = distance
+  h = hauteur
+  
+  if freq != 0:
+    spline3D = interpolation.LinearSpline3D()
+    period = 1 / freq
+    
+    spline3D.add_entry(0, d, 0, z+h)
+    spline3D.add_entry(period / 3, d, d/2, z)
+    spline3D.add_entry((2 * period) / 3, d, -d/2, z)
+    spline3D.add_entry(period, d, 0, z+h)
+    
+    
+      
+    first_step = spline3D.interpolate(t % period)
+    next_step = spline3D.interpolate((t + period/2) % period)
+
+    return first_step, next_step
+
+  return np.zeros(3), np.zeros(3)
+
+
+
+
+
+
 #le target dans le repère du centre du robot  
 def centerTarget(x, y, z, leg_id, verbose=False):
 
