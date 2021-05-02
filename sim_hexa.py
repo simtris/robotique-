@@ -6,7 +6,7 @@ import time
 import argparse
 import pybullet as p
 from onshape_to_robot.simulation import Simulation
-
+import numpy as np
 import robot_moves
 
 import kinematics
@@ -130,6 +130,22 @@ elif args.mode == "walk":
     controls["teta"] = p.addUserDebugParameter("orientation", -math.pi, math.pi, 0)
     controls["freq"] = p.addUserDebugParameter("speed", 0, 5, 1)
 
+
+elif args.mode == "walk-advanced":
+    controls["teta"] = p.addUserDebugParameter("orientation", -math.pi, math.pi, 0)
+    controls["freq"] = p.addUserDebugParameter("speed", 0, 5, 1)
+    controls["dist"] = p.addUserDebugParameter("dist", 0.04, 0.08, 0.01)
+    controls["hauteur"] = p.addUserDebugParameter("hauteur", 0.0001, 0.065, 0.01)
+    
+    
+elif args.mode == "holonomic":
+    controls["teta"] = p.addUserDebugParameter("orientation", -math.pi, math.pi, 0)
+    controls["freq"] = p.addUserDebugParameter("speed", 0, 5, 1)
+    controls["dist_x"] = p.addUserDebugParameter("dist_x", 0.000000001, 0.2, 0.02)
+    controls["dist_y"] = p.addUserDebugParameter("dist_y", 0.0, 0.15, 0.01)
+    
+
+        
 elif args.mode == "center-follow":
     alphas = kinematics.computeDK(0, 0, 0, use_rads=True)
     controls["target_x"] = p.addUserDebugParameter("target_x", -0.2, 0.2, alphas[0])
@@ -165,7 +181,8 @@ elif args.mode == "static_rotation":
 elif args.mode == "dynamic-rotation":
     controls["freq"] = p.addUserDebugParameter("speed", 0, 5, 1)
     controls["hauteur"] = p.addUserDebugParameter("hauteur", 0.01, 0.1, 0.02)
-    controls["distance"] = p.addUserDebugParameter("distance", 0.15, 0.2, 0.02)
+    controls["dist_x"] = p.addUserDebugParameter("dist_x", 0.15, 0.2, 0.02)
+    controls["dist_y"] = p.addUserDebugParameter("dist_y", 0.001, 0.12, 0.01)
     
     
 
@@ -278,20 +295,77 @@ while True:
         state = sim.setJoints(targets)
 
 
+    elif args.mode == "walk-advanced":
+        None
+        # Use your own IK function
+        #sim.setRobotPose([0, 0, 0.5], [0, 0, 0, 1])
+        t = time.time()
+        teta = p.readUserDebugParameter(controls["teta"])
+        freq = p.readUserDebugParameter(controls["freq"])
+        hauteur = p.readUserDebugParameter(controls["hauteur"])
+        dist = p.readUserDebugParameter(controls["dist"])
+
+        
+        first_step, next_step = kinematics.walk_advanced(t, freq, dist, hauteur, params, targets, teta)
+
+        for leg_id in [1,3,5]:
+            alphas = kinematics.computeIKOriented(first_step[0], first_step[1], first_step[2], leg_id, params, teta, verbose=True)
+            set_leg_angles(alphas, leg_id, targets, params)
+
+        for leg_id in [2,4,6]:
+            alphas = kinematics.computeIKOriented(next_step[0], next_step[1], next_step[2], leg_id, params, teta, verbose=True)
+            set_leg_angles(alphas, leg_id, targets, params)
+    
+        state = sim.setJoints(targets)
+
+        
+    elif args.mode == "holonomic":
+        None
+        # Use your own IK function
+        #sim.setRobotPose([0, 0, 0.5], [0, 0, 0, 1])
+        t = time.time()
+        teta = p.readUserDebugParameter(controls["teta"])
+        freq = p.readUserDebugParameter(controls["freq"])
+        dist_x = p.readUserDebugParameter(controls["dist_x"])
+        dist_y = p.readUserDebugParameter(controls["dist_y"])    
+        
+        
+        first_step, next_step = kinematics.walk_advanced(t, freq, dist_x, 0.05, params, targets, teta)
+        first_step2, next_step2 = kinematics.dynamic_rotation(t, freq, dist_x, dist_y, 0.001, params, targets)
+
+        for leg_id in [1,3,5]:
+            alphas = kinematics.computeIKOriented(first_step[0], first_step[1], first_step[2], leg_id, params, teta, verbose=True)
+
+            alphas2 = kinematics.computeIK(first_step2[0], first_step2[1], first_step2[2])
+
+            set_leg_angles(np.array(alphas) + np.array(alphas2), leg_id, targets, params)
+
+        for leg_id in [2,4,6]:
+            alphas = kinematics.computeIKOriented(next_step[0], next_step[1], next_step[2], leg_id, params, teta, verbose=True)
+
+            alphas2 = kinematics.computeIK(next_step2[0], next_step2[1], next_step2[2])
+            
+            set_leg_angles(alphas + alphas2, leg_id, targets, params)
+        
+        
+        
+        state = sim.setJoints(targets)    
+
     elif args.mode == "dynamic-rotation":
         None
         t = time.time()
         freq = p.readUserDebugParameter(controls["freq"])
         hauteur = p.readUserDebugParameter(controls["hauteur"])
-        distance = p.readUserDebugParameter(controls["distance"])
+        dist_x = p.readUserDebugParameter(controls["dist_x"])
+        dist_y = p.readUserDebugParameter(controls["dist_y"])
         
 
-        first_step, next_step = kinematics.dynamic_rotation(t, freq, distance, hauteur, params, targets)
+        first_step, next_step = kinematics.dynamic_rotation(t, freq, dist_x, dist_y, hauteur, params, targets)
 
         for leg_id in [1,3,5]:
             alphas = kinematics.computeIK(first_step[0], first_step[1], first_step[2])
 
-            print("alphas : ", alphas)
+            
             
             set_leg_angles(alphas, leg_id, targets, params)
 

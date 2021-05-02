@@ -202,6 +202,7 @@ def walk(t, freq, params, targets, teta):
   d = 0.08
   h = 0.05
   
+  
   if freq != 0:
     spline3D = interpolation.LinearSpline3D()
     period = 1 / freq
@@ -220,31 +221,60 @@ def walk(t, freq, params, targets, teta):
 
 
 
-def dynamic_rotation(t, freq, distance, hauteur, params, targets):
-  z = params.z
-
-  #d = 0.2
-  #h = 0.1
-
-  d = distance
+def walk_advanced(t, freq, dist, hauteur, params, targets, teta):
+  d = dist
   h = hauteur
+  
   
   if freq != 0:
     spline3D = interpolation.LinearSpline3D()
     period = 1 / freq
     
-    spline3D.add_entry(0, d, 0, z+h)
-    spline3D.add_entry(period / 3, d, d/2, z)
-    spline3D.add_entry((2 * period) / 3, d, -d/2, z)
-    spline3D.add_entry(period, d, 0, z+h)
-    
-    
+    spline3D.add_entry(0, d, 0,  0)
+    spline3D.add_entry(period / 3, -d, 0, 0)
+    spline3D.add_entry((2 * period) / 3, 0, 0, h)
+    spline3D.add_entry(period, d, 0,  0)
       
     first_step = spline3D.interpolate(t % period)
     next_step = spline3D.interpolate((t + period/2) % period)
 
     return first_step, next_step
 
+  return np.zeros(3), np.zeros(3)
+
+
+
+
+
+
+
+def dynamic_rotation(t, freq, dist_x, dist_y, hauteur, params, targets):
+  z = params.z
+
+  #d = 0.2
+  #h = 0.1
+  
+  d_x = dist_x
+  d_y = dist_y
+  h = hauteur
+  
+  if freq != 0:
+    spline3D = interpolation.LinearSpline3D()
+    period = 1 / freq
+    
+    spline3D.add_entry(0, d_x, 0, z+h)
+    spline3D.add_entry(period / 3, d_x, d_y, z)
+    spline3D.add_entry((2 * period) / 3, d_x, -d_y, z)
+    spline3D.add_entry(period, d_x, 0, z+h)
+    
+    
+      
+    first_step = spline3D.interpolate(t % period)
+    next_step = spline3D.interpolate((t + period/2) % period)
+
+    #print("first step : ", type(first_step))
+    return first_step, next_step
+  print("ooooooooooooops")
   return np.zeros(3), np.zeros(3)
 
 
