@@ -186,7 +186,7 @@ def computeIK(
     return result
   
   
-
+#le target dans le repère du bout de la patte du robot  
 def computeIKOriented(x, y, z, leg_id, params, teta, verbose=True):
 
   target = np.array([x, y, z])  # le points cible dans repère du bout de la patte
@@ -201,7 +201,7 @@ def computeIKOriented(x, y, z, leg_id, params, teta, verbose=True):
 def walk(t, freq, params, targets, teta):
   d = 0.08
   h = 0.05
-  #print(type(d))
+  
   if freq != 0:
     spline3D = interpolation.LinearSpline3D()
     period = 1 / freq
@@ -219,39 +219,19 @@ def walk(t, freq, params, targets, teta):
   return np.zeros(3), np.zeros(3)
 
 
-def rotate_fix(t, freq, params, targets, teta):
-  d = 0.08
-  h = 0.05
-  if freq != 0:
-    spline3D = interpolation.LinearSpline3D()
-    period = 1 / freq
-        
-    inter1 = rotaton_2D(0, 0, 0, teta)
 
-    inter2 = rotaton_2D(0, 0, 0, -teta)
+#le target dans le repère du centre du robot  
+def centerTarget(x, y, z, leg_id, verbose=False):
+
+    x -= constants.LEG_CENTER_POS[leg_id - 1][0]
+    y -= constants.LEG_CENTER_POS[leg_id - 1][1]
+    z -= constants.LEG_CENTER_POS[leg_id - 1][2]
+
+    base_leg = rotaton_2D(x,y,z, constants.LEG_ANGLES[leg_id - 1])
+
+    return computeIK(*base_leg)
 
     
-    
-    spline3D.add_entry(0., inter1[0].item(), inter1[1].item(), inter1[2])
-
-    spline3D.add_entry((2 * period) / 3, inter2[0].item(), inter2[1].item(), inter2[2])
-    
-    spline3D.add_entry(period / 3, inter2[0].item(), inter2[1].item(), inter2[2])
-    
-    spline3D.add_entry((2 * period) / 3, 0, 0, h)
-
-    spline3D.add_entry(period, inter1[0].item(), inter1[1].item(), inter1[2])
-      
-    first_step = spline3D.interpolate(t % period)
-    next_step = spline3D.interpolate((t + period/2) % period)
-
-    return first_step, next_step
-
-  return np.zeros(3), np.zeros(3)
-
-
-  
-  
    
   
   

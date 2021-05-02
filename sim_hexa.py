@@ -130,17 +130,39 @@ elif args.mode == "walk":
     controls["teta"] = p.addUserDebugParameter("Direction", -math.pi, math.pi, 0)
     controls["freq"] = p.addUserDebugParameter("Vitesse", 0, 5, 1)
 
-elif args.mode == "rotate_fix":
-    controls["teta"] = p.addUserDebugParameter("Direction", -math.pi, math.pi, 0)
-    controls["freq"] = p.addUserDebugParameter("Vitesse", 0, 5, 1)
-
 elif args.mode == "center-follow":
     alphas = kinematics.computeDK(0, 0, 0, use_rads=True)
     controls["target_x"] = p.addUserDebugParameter("target_x", -0.2, 0.2, alphas[0])
     controls["target_y"] = p.addUserDebugParameter("target_y", -0.15, 0.15, alphas[1])
     controls["target_z"] = p.addUserDebugParameter("target_z", -0.15, 0.09, alphas[2])
-           
 
+elif args.mode == "control-legs":
+    alphas = kinematics.computeDK(0, 0, 0, use_rads=True)
+    controls["target_x1"] = p.addUserDebugParameter("target_x1", -0.4, 0.4, alphas[0])
+    controls["target_y1"] = p.addUserDebugParameter("target_y1", -0.4, 0.4, alphas[1])
+    controls["target_z1"] = p.addUserDebugParameter("target_z1", -0.4, 0.4, alphas[2])
+    controls["target_x2"] = p.addUserDebugParameter("target_x2", -0.4, 0.4, alphas[0])
+    controls["target_y2"] = p.addUserDebugParameter("target_y2", -0.4, 0.4, alphas[1])
+    controls["target_z2"] = p.addUserDebugParameter("target_z2", -0.4, 0.4, alphas[2])
+    controls["target_x3"] = p.addUserDebugParameter("target_x3", -0.4, 0.4, alphas[0])
+    controls["target_y3"] = p.addUserDebugParameter("target_y3", -0.4, 0.4, alphas[1])
+    controls["target_z3"] = p.addUserDebugParameter("target_z3", -0.4, 0.4, alphas[2])
+    controls["target_x4"] = p.addUserDebugParameter("target_x4", -0.4, 0.4, alphas[0])
+    controls["target_y4"] = p.addUserDebugParameter("target_y4", -0.4, 0.4, alphas[1])
+    controls["target_z4"] = p.addUserDebugParameter("target_z4", -0.4, 0.4, alphas[2])
+    controls["target_x5"] = p.addUserDebugParameter("target_x5", -0.4, 0.4, alphas[0])
+    controls["target_y5"] = p.addUserDebugParameter("target_y5", -0.4, 0.4, alphas[1])
+    controls["target_z5"] = p.addUserDebugParameter("target_z5", -0.4, 0.4, alphas[2])
+    controls["target_x6"] = p.addUserDebugParameter("target_x6", -0.4, 0.4, alphas[0])
+    controls["target_y6"] = p.addUserDebugParameter("target_y6", -0.4, 0.4, alphas[1])
+    controls["target_z6"] = p.addUserDebugParameter("target_z6", -0.4, 0.4, alphas[2])
+    
+elif args.mode == "center_rotation":
+    controls["theta"] = p.addUserDebugParameter("theta", math.pi/200, math.pi/5, 50)
+    controls["rayon"] = p.addUserDebugParameter("rayon", 0.25, 0.326, 0.05)
+    
+    
+    
 
 while True:
     targets = {}
@@ -199,7 +221,8 @@ while True:
         targets["j_tibia_rf"] = alphas[2]
 
         state = sim.setJoints(targets)
-        # Temp
+
+        #fixé dans une position haute
         sim.setRobotPose([0, 0, 0.5], [0, 0, 0, 1])
 
         T = kinematics.rotaton_2D(x, y, z, leg_angle)
@@ -226,7 +249,6 @@ while True:
             set_leg_angles(alphas, leg_id, targets, params)
         state = sim.setJoints(targets)
 
-    #elif args.mode == "moveCenter":
 
     elif args.mode == "walk":
         None
@@ -237,29 +259,6 @@ while True:
         freq = p.readUserDebugParameter(controls["freq"])
 
         first_step, next_step = kinematics.walk(t, freq, params, targets, teta)
-
-        for leg_id in [1,3,5]:
-            alphas = kinematics.computeIKOriented(first_step[0], first_step[1], first_step[2], leg_id, params, teta, verbose=True)
-            set_leg_angles(alphas, leg_id, targets, params)
-
-        for leg_id in [2,4,6]:
-            alphas = kinematics.computeIKOriented(next_step[0], next_step[1], next_step[2], leg_id, params, teta, verbose=True)
-            set_leg_angles(alphas, leg_id, targets, params)
-        
-        
-        
-        state = sim.setJoints(targets)
-
-
-    elif args.mode == "rotate_fix":
-        None
-        # Use your own IK function
-        #sim.setRobotPose([0, 0, 0.5], [0, 0, 0, 1])
-        t = time.time()
-        teta = p.readUserDebugParameter(controls["teta"])
-        freq = p.readUserDebugParameter(controls["freq"])
-
-        first_step, next_step = kinematics.rotate_fix(t, freq, params, targets, teta)
 
         for leg_id in [1,3,5]:
             alphas = kinematics.computeIKOriented(first_step[0], first_step[1], first_step[2], leg_id, params, teta, verbose=True)
@@ -291,6 +290,103 @@ while True:
             set_leg_angles(alphas, leg_id, targets, params)
         
         state = sim.setJoints(targets)
+
+    elif args.mode == "control-legs":
+        #1
+        x = p.readUserDebugParameter(controls["target_x1"])
+        y = p.readUserDebugParameter(controls["target_y1"])
+        z = p.readUserDebugParameter(controls["target_z1"])
+        alphas = kinematics.computeIK(x, y, z, verbose=True, use_rads=True)
+
+        targets["j_c1_rf"] = alphas[0]
+        targets["j_thigh_rf"] = alphas[1]
+        targets["j_tibia_rf"] = alphas[2]
+        
+
+        
+        #2
+        x = p.readUserDebugParameter(controls["target_x2"])
+        y = p.readUserDebugParameter(controls["target_y2"])
+        z = p.readUserDebugParameter(controls["target_z2"])
+        alphas = kinematics.computeIK(x, y, z, verbose=True, use_rads=True)
+
+        targets["j_c1_lf"] = alphas[0]
+        targets["j_thigh_lf"] = alphas[1]
+        targets["j_tibia_lf"] = alphas[2]
+        
+
+        
+        #3
+        x = p.readUserDebugParameter(controls["target_x3"])
+        y = p.readUserDebugParameter(controls["target_y3"])
+        z = p.readUserDebugParameter(controls["target_z3"])
+        alphas = kinematics.computeIK(x, y, z, verbose=True, use_rads=True)
+
+        
+        targets["j_c1_lm"] = alphas[0]
+        targets["j_thigh_lm"] = alphas[1]
+        targets["j_tibia_lm"] = alphas[2]
+        
+
+        #4
+        x = p.readUserDebugParameter(controls["target_x4"])
+        y = p.readUserDebugParameter(controls["target_y4"])
+        z = p.readUserDebugParameter(controls["target_z4"])
+        alphas = kinematics.computeIK(x, y, z, verbose=True, use_rads=True)
+
+        
+        targets["j_c1_lr"] = alphas[0]
+        targets["j_thigh_lr"] = alphas[1]
+        targets["j_tibia_lr"] = alphas[2]
+        
+
+        #5
+        x = p.readUserDebugParameter(controls["target_x5"])
+        y = p.readUserDebugParameter(controls["target_y5"])
+        z = p.readUserDebugParameter(controls["target_z5"])
+        alphas = kinematics.computeIK(x, y, z, verbose=True, use_rads=True)
+
+        
+        targets["j_c1_rr"] = alphas[0]
+        targets["j_thigh_rr"] = alphas[1]
+        targets["j_tibia_rr"] = alphas[2]
+        
+
+        #6
+        x = p.readUserDebugParameter(controls["target_x6"])
+        y = p.readUserDebugParameter(controls["target_y6"])
+        z = p.readUserDebugParameter(controls["target_z6"])
+        alphas = kinematics.computeIK(x, y, z, verbose=True, use_rads=True)
+        
+        targets["j_c1_rm"] = alphas[0]
+        targets["j_thigh_rm"] = alphas[1]
+        targets["j_tibia_rm"] = alphas[2]
+
+
+        state = sim.setJoints(targets)
+
+        #fixé dans une position haute
+        sim.setRobotPose([0, 0, 0.5], [0, 0, 0, 1])
+
+
+    elif args.mode == "center_rotation" :
+        h = -0.1
+        theta = p.readUserDebugParameter(controls["theta"])
+
+        rayon = p.readUserDebugParameter(controls["rayon"])
+        for leg_id in range (1,7):
+            
+            angle = theta - LEG_ANGLES[leg_id - 1]
+            
+            px = rayon * math.cos(angle)
+            py = rayon * math.sin(angle)
+            
+            alphas = kinematics.centerTarget(px, py, h, leg_id)
+            
+            set_leg_angles(alphas, leg_id, targets, params)
+
+        state = sim.setJoints(targets)
+
         
 
     sim.tick()
