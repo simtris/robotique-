@@ -130,7 +130,10 @@ elif args.mode == "walk":
     controls["teta"] = p.addUserDebugParameter("orientation", -math.pi, math.pi, 0)
     controls["freq"] = p.addUserDebugParameter("speed", 0, 5, 1)
 
-
+elif args.mode == "walk-2by2":
+    controls["teta"] = p.addUserDebugParameter("orientation", -math.pi, math.pi, 0)
+    controls["freq"] = p.addUserDebugParameter("speed", 0, 5, 1)
+    
 elif args.mode == "walk-advanced":
     controls["teta"] = p.addUserDebugParameter("orientation", -math.pi, math.pi, 0)
     controls["freq"] = p.addUserDebugParameter("speed", 0, 5, 1)
@@ -294,6 +297,37 @@ while True:
         
         state = sim.setJoints(targets)
 
+
+    elif args.mode == "walk-2by2":
+        None
+        # Use your own IK function
+        #sim.setRobotPose([0, 0, 0.5], [0, 0, 0, 1])
+        t = time.time()
+        teta = p.readUserDebugParameter(controls["teta"])
+        freq = p.readUserDebugParameter(controls["freq"])
+
+        #teta = 0
+        
+        first_step, second_step, last_step = kinematics.walk_2by2(t, freq, params, targets, teta)
+
+        for leg_id in [2,5]:
+            alphas = kinematics.computeIKOriented(first_step[0], first_step[1], first_step[2], leg_id, params, teta, verbose=True)
+            set_leg_angles(alphas, leg_id, targets, params)
+
+        for leg_id in [4,6]:
+            alphas = kinematics.computeIKOriented(second_step[0], second_step[1], second_step[2], leg_id, params, teta, verbose=True)
+            set_leg_angles(alphas, leg_id, targets, params)
+        
+        for leg_id in [1,3]:
+            alphas = kinematics.computeIKOriented(last_step[0], last_step[1], last_step[2], leg_id, params, teta, verbose=True)
+            set_leg_angles(alphas, leg_id, targets, params)
+        
+            
+        
+        state = sim.setJoints(targets)
+
+
+        
 
     elif args.mode == "walk-advanced":
         None

@@ -243,6 +243,27 @@ def walk_advanced(t, freq, dist, hauteur, params, targets, teta):
   return np.zeros(3), np.zeros(3)
 
 
+def walk_2by2(t, freq, params, targets, teta):
+  d = 0.05
+  h = 0.05
+  
+  
+  if freq != 0:
+    spline3D = interpolation.LinearSpline3D()
+    period = 1 / freq
+    
+    spline3D.add_entry(0, d, 0,  0)
+    spline3D.add_entry(period / 3, -d, 0, 0)
+    spline3D.add_entry((2 * period) / 3, 0, 0, h)
+    spline3D.add_entry(period, d, 0,  0)
+      
+    first_step = spline3D.interpolate(t % period)
+    second_step = spline3D.interpolate((t + period/3) % period)
+    last_step = spline3D.interpolate((t + (2*period)/3) % period)
+
+    return first_step, second_step, last_step
+
+  return np.zeros(3), np.zeros(3), np.zeros(3)
 
 
 
