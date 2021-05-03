@@ -379,7 +379,7 @@ while True:
 
             alphas2 = kinematics.computeIK(next_step2[0], next_step2[1], next_step2[2])
             
-            set_leg_angles(alphas + alphas2, leg_id, targets, params)
+            set_leg_angles(np.array(alphas) + np.array(alphas2), leg_id, targets, params)
         
         
         
