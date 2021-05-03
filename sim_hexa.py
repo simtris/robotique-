@@ -372,14 +372,14 @@ while True:
 
             alphas2 = kinematics.computeIK(first_step2[0], first_step2[1], first_step2[2])
 
-            set_leg_angles(np.array(alphas) + np.array(alphas2), leg_id, targets, params)
+            set_leg_angles(np.array(alphas) - np.array(alphas2), leg_id, targets, params)
 
         for leg_id in [2,4,6]:
             alphas = kinematics.computeIKOriented(next_step[0], next_step[1], next_step[2], leg_id, params, teta, verbose=True)
 
             alphas2 = kinematics.computeIK(next_step2[0], next_step2[1], next_step2[2])
             
-            set_leg_angles(np.array(alphas) + np.array(alphas2), leg_id, targets, params)
+            set_leg_angles(np.array(alphas) - np.array(alphas2), leg_id, targets, params)
         
         
         
